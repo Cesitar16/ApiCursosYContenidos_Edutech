@@ -20,8 +20,8 @@ public class Modulo
 {
     @Id // Clave primaria
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Autoincremental (MySQL)
-    @Column(name = "id_modulo")
-    private Integer idMdoulo;
+    @Column(name = "id_Modulo")
+    private Integer idModulo;
 
     @Column(nullable = false, length = 50)
     private String titulo;

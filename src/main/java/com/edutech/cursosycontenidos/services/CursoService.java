@@ -1,11 +1,18 @@
 package com.edutech.cursosycontenidos.services;
 
+import com.edutech.cursosycontenidos.dto.CategoriaDTO;
 import com.edutech.cursosycontenidos.dto.CursoDTO;
+import com.edutech.cursosycontenidos.models.Categoria;
 import com.edutech.cursosycontenidos.models.Curso;
+import com.edutech.cursosycontenidos.models.Usuario;
+import com.edutech.cursosycontenidos.repository.CategoriaRepository;
 import com.edutech.cursosycontenidos.repository.CursoRepository;
+import com.edutech.cursosycontenidos.repository.UsuarioRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -16,41 +23,50 @@ public class CursoService {
     @Autowired
     private CursoRepository repository;
 
-    //Para Guardar los Cursos nuevos
+    @Autowired
+    private CategoriaRepository categoriaRepository;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
     public CursoDTO guardar(CursoDTO dto) {
         Curso curso = toEntity(dto);
         Curso saved = repository.save(curso);
         return toDTO(saved);
     }
 
-    //Para obtener una Lista de CursoDTO con todos los cursos Existentes
     public List<CursoDTO> listar() {
         return repository.findAll().stream()
                 .map(this::toDTO)
                 .collect(Collectors.toList());
     }
 
-    //Buscar curso por ID
     public Optional<CursoDTO> obtenerPorId(Integer id) {
         return repository.findById(id)
                 .map(this::toDTO);
     }
 
-    //Actualiza los datos de un curso Existente
     public Optional<CursoDTO> actualizar(Integer id, CursoDTO dto) {
         return repository.findById(id)
-                .map(curso -> {
-                    curso.setNombreCurso(dto.getNombreCurso());
-                    curso.setDescripcion(dto.getDescripcion());
-                    curso.setFechaCreacion(dto.getFechaCreacion()); // Ahora ambos son LocalDate
-                    curso.setEstado(dto.getEstado());
-                    curso.setPrecio(dto.getPrecio());               // Ahora el método existe
-                    Curso actualizado = repository.save(curso);
+                .map(cursoExistente -> {
+                    cursoExistente.setNombreCurso(dto.getNombreCurso());
+                    cursoExistente.setDescripcion(dto.getDescripcion());
+                    cursoExistente.setEstado(dto.getEstado());
+                    cursoExistente.setPrecio(dto.getPrecio());
+
+                    Categoria categoria = categoriaRepository.findById(dto.getCategoria().getIdCategoria())
+                            .orElseThrow(() -> new EntityNotFoundException("Categoría no encontrada con ID: " + dto.getCategoria().getIdCategoria()));
+                    cursoExistente.setCategoria(categoria);
+
+                    Usuario usuario = usuarioRepository.findById(dto.getUsuarioId())
+                            .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado con ID: " + dto.getUsuarioId()));
+                    cursoExistente.setUsuario(usuario);
+
+                    Curso actualizado = repository.save(cursoExistente);
                     return toDTO(actualizado);
                 });
     }
 
-    //Para Eliminar un curso de la base de datos
     public boolean eliminar(Integer id) {
         if (repository.existsById(id)) {
             repository.deleteById(id);
@@ -59,29 +75,66 @@ public class CursoService {
         return false;
     }
 
-    // --- Métodos auxiliares---
+    public List<CursoDTO> buscarPorCategoriaId(Integer categoriaId) {
+        return repository.findByCategoriaIdCategoria(categoriaId).stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
 
-    //Convierte una entidad Curso a un DTO
+    public List<CursoDTO> buscarPorUsuarioId(Integer usuarioId) {
+        return repository.findByUsuarioIdUser(usuarioId).stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+    }
+
     private CursoDTO toDTO(Curso curso) {
         CursoDTO dto = new CursoDTO();
         dto.setIdCurso(curso.getIdCurso());
         dto.setNombreCurso(curso.getNombreCurso());
         dto.setDescripcion(curso.getDescripcion());
-        dto.setFechaCreacion(curso.getFechaCreacion()); // Ahora ambos son LocalDate
+        dto.setFechaCreacion(curso.getFechaCreacion());
         dto.setEstado(curso.getEstado());
-        dto.setPrecio(curso.getPrecio());               // Ahora el método existe
+        dto.setPrecio(curso.getPrecio());
+
+        if (curso.getUsuario() != null) {
+            dto.setUsuarioId(curso.getUsuario().getIdUser());
+        }
+
+        if (curso.getCategoria() != null) {
+            CategoriaDTO categoriaDto = new CategoriaDTO();
+            categoriaDto.setIdCategoria(curso.getCategoria().getIdCategoria());
+            categoriaDto.setNombreCate(curso.getCategoria().getNombreCate());
+            dto.setCategoria(categoriaDto);
+        }
+
         return dto;
     }
 
-    //Convierte un DTO a una entidad Curso
     private Curso toEntity(CursoDTO dto) {
         Curso curso = new Curso();
-        curso.setIdCurso(dto.getIdCurso());
+
+        if (dto.getIdCurso() != null) {
+            curso.setIdCurso(dto.getIdCurso());
+        }
+
         curso.setNombreCurso(dto.getNombreCurso());
         curso.setDescripcion(dto.getDescripcion());
-        curso.setFechaCreacion(dto.getFechaCreacion()); // Ahora ambos son LocalDate
+        curso.setFechaCreacion(dto.getFechaCreacion() != null ? dto.getFechaCreacion() : LocalDate.now());
         curso.setEstado(dto.getEstado());
-        curso.setPrecio(dto.getPrecio());               // Ahora el método existe
+        curso.setPrecio(dto.getPrecio());
+
+        if (dto.getCategoria() != null && dto.getCategoria().getIdCategoria() != null) {
+            Categoria categoria = categoriaRepository.findById(dto.getCategoria().getIdCategoria())
+                    .orElseThrow(() -> new EntityNotFoundException("No se encontró la categoría con el ID: " + dto.getCategoria().getIdCategoria()));
+            curso.setCategoria(categoria);
+        }
+
+        if (dto.getUsuarioId() != null) {
+            Usuario usuario = usuarioRepository.findById(dto.getUsuarioId())
+                    .orElseThrow(() -> new EntityNotFoundException("No se encontró el usuario con el ID: " + dto.getUsuarioId()));
+            curso.setUsuario(usuario);
+        }
+
         return curso;
     }
 }

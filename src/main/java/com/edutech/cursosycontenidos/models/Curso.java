@@ -40,6 +40,9 @@ public class Curso
     @Column(nullable = false, length = 11)
     private int precio;
 
+    @ManyToOne
+    @JoinColumn(name = "USUARIO_id_user", nullable = false)
+    private Usuario usuario;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "CATEGORIA_id_categoria",nullable = false)

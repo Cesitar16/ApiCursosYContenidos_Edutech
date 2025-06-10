@@ -1,6 +1,8 @@
 package com.edutech.cursosycontenidos.controllers;
 
+import com.edutech.cursosycontenidos.dto.ContenidoDTO;
 import com.edutech.cursosycontenidos.dto.ModuloDTO;
+import com.edutech.cursosycontenidos.services.ContenidoService;
 import com.edutech.cursosycontenidos.services.ModuloService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +17,9 @@ public class ModuloController {
     @Autowired
     private ModuloService service;
 
+    @Autowired
+    private ContenidoService contenidoService;
+
     @PostMapping
     public ResponseEntity<ModuloDTO> crear(@RequestBody ModuloDTO dto) {
         return ResponseEntity.ok(service.guardar(dto));
@@ -24,6 +29,8 @@ public class ModuloController {
     public ResponseEntity<List<ModuloDTO>> listar() {
         return ResponseEntity.ok(service.listar());
     }
+
+
 
     @GetMapping("/{id}")
     public ResponseEntity<ModuloDTO> obtener(@PathVariable Integer id) {
@@ -44,5 +51,11 @@ public class ModuloController {
         return service.eliminar(id)
                 ? ResponseEntity.noContent().build()
                 : ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/{moduloId}/contenidos")
+    public ResponseEntity<List<ContenidoDTO>> obtenerContenidosPorModulo(@PathVariable Integer moduloId) {
+        List<ContenidoDTO> contenidos = contenidoService.buscarPorModuloId(moduloId);
+        return ResponseEntity.ok(contenidos);
     }
 }
