@@ -1,6 +1,7 @@
 package com.edutech.cursosycontenidos.services;
 
 import com.edutech.cursosycontenidos.dto.CategoriaDTO;
+import com.edutech.cursosycontenidos.dto.CategoriaInfoDTO;
 import com.edutech.cursosycontenidos.dto.CursoDTO;
 import com.edutech.cursosycontenidos.models.Categoria;
 import com.edutech.cursosycontenidos.models.Curso;
@@ -101,10 +102,11 @@ public class CursoService {
         }
 
         if (curso.getCategoria() != null) {
-            CategoriaDTO categoriaDto = new CategoriaDTO();
-            categoriaDto.setIdCategoria(curso.getCategoria().getIdCategoria());
-            categoriaDto.setNombreCate(curso.getCategoria().getNombreCate());
-            dto.setCategoria(categoriaDto);
+            // Crea el DTO simple que NO tiene el campo "links"
+            CategoriaInfoDTO categoriaInfo = new CategoriaInfoDTO();
+            categoriaInfo.setIdCategoria(curso.getCategoria().getIdCategoria());
+            categoriaInfo.setNombreCate(curso.getCategoria().getNombreCate());
+            dto.setCategoria(categoriaInfo); // Asigna el DTO simple
         }
 
         return dto;
