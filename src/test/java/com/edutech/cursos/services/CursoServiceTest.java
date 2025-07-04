@@ -57,7 +57,6 @@ class CursoServiceTest {
         cursoDTO.setIdCurso(202);
         cursoDTO.setNombreCurso("Python para Data Science");
         cursoDTO.setUsuarioId(5);
-        cursoDTO.setCategoria(categoriaDTO);
 
         // 3. Validar
         assertNotNull(cursoDTO);
